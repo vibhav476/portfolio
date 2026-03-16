@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI System Architecture Reviewer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.0/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0b; --surface: #141417; --surface2: #1c1c21;
+    --border: #27272a; --text: #fafafa; --text2: #a1a1aa;
+    --accent: #6366f1; --accent-hover: #818cf8;
+    --green: #22c55e; --red: #ef4444; --yellow: #eab308; --blue: #3b82f6;
+    --radius: 12px; --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  [data-theme="light"] {
+    --bg: #f8f9fa; --surface: #ffffff; --surface2: #f1f3f5;
+    --border: #dee2e6; --text: #1a1a2e; --text2: #6c757d;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Header */
+  .header { border-bottom: 1px solid var(--border); padding: 20px 0; }
+  .header-inner { max-width: 900px; margin: 0 auto; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; }
+  .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo span { color: var(--accent); }
+  .theme-toggle { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+
+  /* Main */
+  .container { max-width: 900px; margin: 0 auto; padding: 48px 24px; }
+  h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .subtitle { color: var(--text2); font-size: 16px; margin-bottom: 40px; }
+
+  /* Form */
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 32px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  textarea, input[type="text"] {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; padding: 12px 14px; font-size: 14px; font-family: var(--font);
+    transition: border-color 0.2s;
+  }
+  textarea:focus, input:focus { outline: none; border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 120px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .form-group { margin-top: 16px; }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 20px;
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 12px 24px; font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Results */
+  .results { display: none; }
+  .results.visible { display: block; }
+  .demo-badge { background: var(--yellow); color: #000; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; margin-bottom: 16px; display: inline-block; }
+
+  /* Score */
+  .score-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 20px; text-align: center; }
+  .score-ring { width: 100px; height: 100px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800; margin-bottom: 12px; }
+  .score-low { border: 4px solid var(--red); color: var(--red); }
+  .score-mid { border: 4px solid var(--yellow); color: var(--yellow); }
+  .score-high { border: 4px solid var(--green); color: var(--green); }
+  .score-label { color: var(--text2); font-size: 14px; }
+
+  /* Cards */
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  @media (max-width: 640px) { .card-grid, .form-row { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
+  .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .card-title .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .card ul { list-style: none; }
+  .card li { position: relative; padding-left: 16px; margin-bottom: 10px; font-size: 14px; color: var(--text2); line-height: 1.5; }
+  .card li::before { content: ""; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
+
+  /* Diagram */
+  .diagram-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 20px; }
+  .diagram-card .card-title { margin-bottom: 20px; }
+  #diagram-container { background: var(--surface2); border-radius: 8px; padding: 20px; display: flex; justify-content: center; overflow-x: auto; }
+  #diagram-container svg { max-width: 100%; height: auto; }
+
+  /* Loading */
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-inner">
+    <div class="logo"><span>&#9670;</span> Arch Reviewer</div>
+    <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
+  </div>
+</div>
+
+<div class="container">
+  <h1>AI System Architecture Reviewer</h1>
+  <p class="subtitle">Analyze and improve your system architecture using AI agents.</p>
+
+  <!-- Input Form -->
+  <div class="form-card">
+    <label for="arch-desc">Architecture Description</label>
+    <textarea id="arch-desc" placeholder="Frontend: React&#10;Backend: Node.js&#10;Database: PostgreSQL&#10;Infrastructure: AWS EC2&#10;Traffic: 100k users/day"></textarea>
+
+    <div class="form-row">
+      <div>
+        <label for="tech-stack">Technology Stack</label>
+        <input type="text" id="tech-stack" placeholder="React, Node.js, PostgreSQL, AWS">
+      </div>
+      <div>
+        <label for="traffic">Expected Traffic</label>
+        <input type="text" id="traffic" placeholder="100k users per day">
+      </div>
+    </div>
+
+    <button class="btn-primary" id="analyze-btn" onclick="analyze()">
+      <span id="btn-text">Analyze Architecture</span>
+    </button>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+    <div id="demo-badge-container"></div>
+
+    <!-- Score -->
+    <div class="score-card">
+      <div class="score-ring" id="score-ring">—</div>
+      <div class="score-label">Architecture Score</div>
+      <p id="summary" style="color:var(--text2); margin-top:12px; font-size:14px; max-width:600px; margin-left:auto; margin-right:auto; line-height:1.6;"></p>
+    </div>
+
+    <!-- Analysis Cards -->
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--green)"></span> Strengths</div>
+        <ul id="strengths"></ul>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--red)"></span> Risks</div>
+        <ul id="risks"></ul>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--yellow)"></span> Scalability Issues</div>
+        <ul id="scalability"></ul>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--blue)"></span> Security Issues</div>
+        <ul id="security"></ul>
+      </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title"><span class="dot" style="background:var(--accent)"></span> Recommended Improvements</div>
+      <ul id="recommendations"></ul>
+    </div>
+
+    <!-- Diagram -->
+    <div class="diagram-card">
+      <div class="card-title"><span class="dot" style="background:var(--accent)"></span> Architecture Diagram</div>
+      <div id="diagram-container"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = "http://localhost:8000";
+
+function toggleTheme() {
+  const html = document.documentElement;
+  html.setAttribute("data-theme", html.getAttribute("data-theme") === "light" ? "" : "light");
+}
+
+async function analyze() {
+  const btn = document.getElementById("analyze-btn");
+  const btnText = document.getElementById("btn-text");
+  const desc = document.getElementById("arch-desc").value.trim();
+  if (!desc) { alert("Please enter an architecture description."); return; }
+
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"><\/span> Analyzing...';
+
+  try {
+    const res = await fetch(\`\${API_URL}/analyze-architecture\`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        architecture: desc,
+        tech_stack: document.getElementById("tech-stack").value,
+        traffic: document.getElementById("traffic").value,
+      }),
+    });
+
+    if (!res.ok) throw new Error(\`Server error: \${res.status}\`);
+    const data = await res.json();
+    renderResults(data);
+  } catch (err) {
+    alert("Error: " + err.message + "\n\nMake sure the backend is running on localhost:8000");
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = "Analyze Architecture";
+  }
+}
+
+function renderResults(data) {
+  const { analysis, diagram, demo_mode } = data;
+  document.getElementById("results").classList.add("visible");
+
+  // Demo badge
+  document.getElementById("demo-badge-container").innerHTML = demo_mode
+    ? '<span class="demo-badge">DEMO MODE — Set ANTHROPIC_API_KEY for live analysis<\/span>' : '';
+
+  // Score
+  const score = analysis.score || 0;
+  const ring = document.getElementById("score-ring");
+  ring.textContent = score;
+  ring.className = "score-ring " + (score <= 4 ? "score-low" : score <= 7 ? "score-mid" : "score-high");
+  document.getElementById("summary").textContent = analysis.summary || "";
+
+  // Lists
+  renderList("strengths", analysis.strengths);
+  renderList("risks", analysis.risks);
+  renderList("scalability", analysis.scalability_issues);
+  renderList("security", analysis.security_issues);
+  renderList("recommendations", analysis.recommendations);
+
+  // Mermaid diagram
+  renderDiagram(diagram);<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI System Architecture Reviewer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.0/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0b; --surface: #141417; --surface2: #1c1c21;
+    --border: #27272a; --text: #fafafa; --text2: #a1a1aa;
+    --accent: #6366f1; --accent-hover: #818cf8;
+    --green: #22c55e; --red: #ef4444; --yellow: #eab308; --blue: #3b82f6;
+    --radius: 12px; --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  [data-theme="light"] {
+    --bg: #f8f9fa; --surface: #ffffff; --surface2: #f1f3f5;
+    --border: #dee2e6; --text: #1a1a2e; --text2: #6c757d;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Header */
+  .header { border-bottom: 1px solid var(--border); padding: 20px 0; }
+  .header-inner { max-width: 900px; margin: 0 auto; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; }
+  .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo span { color: var(--accent); }
+  .theme-toggle { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+
+  /* Main */
+  .container { max-width: 900px; margin: 0 auto; padding: 48px 24px; }
+  h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .subtitle { color: var(--text2); font-size: 16px; margin-bottom: 40px; }
+
+  /* Form */
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 32px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  textarea, input[type="text"] {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; padding: 12px 14px; font-size: 14px; font-family: var(--font);
+    transition: border-color 0.2s;
+  }
+  textarea:focus, input:focus { outline: none; border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 120px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .form-group { margin-top: 16px; }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 20px;
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 12px 24px; font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Results */
+  .results { display: none; }
+  .results.visible { display: block; }
+  .demo-badge { background: var(--yellow); color: #000; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; margin-bottom: 16px; display: inline-block; }
+
+  /* Score */
+  .score-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 20px; text-align: center; }
+  .score-ring { width: 100px; height: 100px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800; margin-bottom: 12px; }
+  .score-low { border: 4px solid var(--red); color: var(--red); }
+  .score-mid { border: 4px solid var(--yellow); color: var(--yellow); }
+  .score-high { border: 4px solid var(--green); color: var(--green); }
+  .score-label { color: var(--text2); font-size: 14px; }
+
+  /* Cards */
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  @media (max-width: 640px) { .card-grid, .form-row { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
+  .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .card-title .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .card ul { list-style: none; }
+  .card li { position: relative; padding-left: 16px; margin-bottom: 10px; font-size: 14px; color: var(--text2); line-height: 1.5; }
+  .card li::before { content: ""; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
+
+  /* Diagram */
+  .diagram-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 20px; }
+  .diagram-card .card-title { margin-bottom: 20px; }
+  #diagram-container { background: var(--surface2); border-radius: 8px; padding: 20px; display: flex; justify-content: center; overflow-x: auto; }
+  #diagram-container svg { max-width: 100%; height: auto; }
+
+  /* Loading */
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-inner">
+    <div class="logo"><span>&#9670;</span> Arch Reviewer</div>
+    <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
+  </div>
+</div>
+
+<div class="container">
+  <h1>AI System Architecture Reviewer</h1>
+  <p class="subtitle">Analyze and improve your system architecture using AI agents.</p>
+
+  <!-- Input Form -->
+  <div class="form-card">
+    <label for="arch-desc">Architecture Description</label>
+    <textarea id="arch-desc" placeholder="Frontend: React&#10;Backend: Node.js&#10;Database: PostgreSQL&#10;Infrastructure: AWS EC2&#10;Traffic: 100k users/day"></textarea>
+
+    <div class="form-row">
+      <div>
+        <label for="tech-stack">Technology Stack</label>
+        <input type="text" id="tech-stack" placeholder="React, Node.js, PostgreSQL, AWS">
+      </div>
+      <div>
+        <label for="traffic">Expected Traffic</label>
+        <input type="text" id="traffic" placeholder="100k users per day">
+      </div>
+    </div>
+
+    <button class="btn-primary" id="analyze-btn" onclick="analyze()">
+      <span id="btn-text">Analyze Architecture</span>
+    </button>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+    <div id="demo-badge-container"></div>
+
+    <!-- Score -->
+    <div class="score-card">
+      <div class="score-ring" id="score-ring">—</div>
+      <div class="score-label">Architecture Score</div>
+      <p id="summary" style="color:var(--text2); margin-top:12px; font-size:14px; max-width:600px; margin-left:auto; margin-right:auto; line-height:1.6;"></p>
+    </div>
+
+    <!-- Analysis Cards -->
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--green)"></span> Strengths</div>
+        <ul id="strengths"></ul>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--red)"></span> Risks</div>
+        <ul id="risks"></ul>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--yellow)"></span> Scalability Issues</div>
+        <ul id="scalability"></ul>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--blue)"></span> Security Issues</div>
+        <ul id="security"></ul>
+      </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title"><span class="dot" style="background:var(--accent)"></span> Recommended Improvements</div>
+      <ul id="recommendations"></ul>
+    </div>
+
+    <!-- Diagram -->
+    <div class="diagram-card">
+      <div class="card-title"><span class="dot" style="background:var(--accent)"></span> Architecture Diagram</div>
+      <div id="diagram-container"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = "http://localhost:8000";
+
+function toggleTheme() {
+  const html = document.documentElement;
+  html.setAttribute("data-theme", html.getAttribute("data-theme") === "light" ? "" : "light");
+}
+
+async function analyze() {
+  const btn = document.getElementById("analyze-btn");
+  const btnText = document.getElementById("btn-text");
+  const desc = document.getElementById("arch-desc").value.trim();
+  if (!desc) { alert("Please enter an architecture description."); return; }
+
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> Analyzing...';
+
+  try {
+    const res = await fetch(`${API_URL}/analyze-architecture`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        architecture: desc,
+        tech_stack: document.getElementById("tech-stack").value,
+        traffic: document.getElementById("traffic").value,
+      }),
+    });
+
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    const data = await res.json();
+    renderResults(data);
+  } catch (err) {
+    alert("Error: " + err.message + "\n\nMake sure the backend is running on localhost:8000");
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = "Analyze Architecture";
+  }
+}
+
+function renderResults(data) {
+  const { analysis, diagram, demo_mode } = data;
+  document.getElementById("results").classList.add("visible");
+
+  // Demo badge
+  document.getElementById("demo-badge-container").innerHTML = demo_mode
+    ? '<span class="demo-badge">DEMO MODE — Set ANTHROPIC_API_KEY for live analysis</span>' : '';
+
+  // Score
+  const score = analysis.score || 0;
+  const ring = document.getElementById("score-ring");
+  ring.textContent = score;
+  ring.className = "score-ring " + (score <= 4 ? "score-low" : score <= 7 ? "score-mid" : "score-high");
+  document.getElementById("summary").textContent = analysis.summary || "";
+
+  // Lists
+  renderList("strengths", analysis.strengths);
+  renderList("risks", analysis.risks);
+  renderList("scalability", analysis.scalability_issues);
+  renderList("security", analysis.security_issues);
+  renderList("recommendations", analysis.recommendations);
+
+  // Mermaid diagram
+  renderDiagram(diagram);
+
+  document.getElementById("results").scrollIntoView({ behavior: "smooth" });
+}
+
+function renderList(id, items) {
+  const ul = document.getElementById(id);
+  ul.innerHTML = (items || []).map(i => `<li>${i}</li>`).join("");
+}
+
+async function renderDiagram(mermaidCode) {
+  const container = document.getElementById("diagram-container");
+  if (!mermaidCode) { container.innerHTML = "<p style='color:var(--text2)'>No diagram generated.</p>"; return; }
+  try {
+    mermaid.initialize({ startOnLoad: false, theme: "dark", securityLevel: "loose" });
+    const { svg } = await mermaid.render("arch-diagram", mermaidCode);
+    container.innerHTML = svg;
+  } catch (e) {
+    container.innerHTML = `<pre style="color:var(--text2); font-size:13px; white-space:pre-wrap;">${mermaidCode}</pre>`;
+  }
+}
+</script>
+</body>
+</html>
+  document.getElementById("results").scrollIntoView({ behavior: "smooth" });
+}
+
+function renderList(id, items) {
+  const ul = document.getElementById(id);
+  ul.innerHTML = (items || []).map(i => \`<li>\${i}<\/li>\`).join("");
+}
+
+async function renderDiagram(mermaidCode) {
+  const container = document.getElementById("diagram-container");
+  if (!mermaidCode) { container.innerHTML = "<p style='color:var(--text2)'>No diagram generated.<\/p>"; return; }
+  try {
+    mermaid.initialize({ startOnLoad: false, theme: "dark", securityLevel: "loose" });
+    const { svg } = await mermaid.render("arch-diagram", mermaidCode);
+    container.innerHTML = svg;
+  } catch (e) {
+    container.innerHTML = \`<pre style="color:var(--text2); font-size:13px; white-space:pre-wrap;">\${mermaidCode}<\/pre>\`;
+  }
+}
+</script>
+</body>
+</html>
